@@ -1,9 +1,15 @@
 package org.example.training.mixer;
 
+import org.example.training.exception.MixerException;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
-public interface Mixer
+/**
+ * Interface for mixing input.
+ * @param <RETURN_TYPE> the type returned.
+ */
+public interface Mixer<RETURN_TYPE>
 {
 
     /**
@@ -12,9 +18,9 @@ public interface Mixer
      * @param input The original order of the input.
      * @return A list of the input in a different order.
      */
-    List<String> mix( String[] input );
+    List<RETURN_TYPE> mix( String[] input ) throws MixerException;
 
-    static Mixer getMixer( String name )
+    static Mixer<?> getMixer( String name )
     {
         try
         {

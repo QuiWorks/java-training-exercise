@@ -6,7 +6,10 @@ import java.util.Optional;
 public enum Type
 {
     BACKWARDS( BackwardsMixer.class ),
-    BROKEN( BackwardsMixer.class );
+    BROKEN( BackwardsMixer.class ),
+    ALPHABETICAL( AlphabeticalMixer.class ),
+    ASCENDING( AscendingMixer.class ),
+    DESCENDING( DescendingMixer.class );
 
     private final Class<? extends Mixer> mixerClass;
 

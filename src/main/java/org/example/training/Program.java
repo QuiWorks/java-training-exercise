@@ -3,6 +3,8 @@ package org.example.training;
 import org.example.training.mixer.Mixer;
 import org.example.training.mixer.Type;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -19,7 +21,10 @@ public class Program
         Optional.ofNullable(System.getProperties().getOrDefault( SYSTEM_PROP, Type.BROKEN.name()))
                 .map(String::valueOf)
                 .map(Mixer::getMixer)
-                .ifPresent(mixer -> mixer.mix(args).forEach(System.out::println));
+                .map(mixer -> mixer.mix( args ))
+                .ifPresent(list -> list.stream()
+                    .map( String::valueOf )
+                    .forEach( System.out::println ) );
     }
 
 }

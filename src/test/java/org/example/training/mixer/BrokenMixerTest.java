@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class BrokenMixerTest
 {
 
-    private Mixer mixer;
+    private Mixer<String> mixer;
 
     @BeforeEach
     void setUp()

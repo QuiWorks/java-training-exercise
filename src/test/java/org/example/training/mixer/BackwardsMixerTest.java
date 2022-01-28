@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BackwardsMixerTest
 {
-    private BackwardsMixer mixer;
+    private Mixer<String> mixer;
 
     @BeforeEach
     void setUp()
