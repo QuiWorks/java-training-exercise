@@ -53,6 +53,19 @@ class ProgramAbstractionTest {
     }
 
     @Test
+    void addIntWorks() {
+        final String[] args = new String[]{"3","2","1"};
+        new Program() {
+        }.run(args,
+                STREAM_ARRAY_STRING.getProcedure(),
+                CONVERT_STREAM_INTEGER.getProcedure(),
+                ADD_INT.getProcedure(),
+                PRINT_INT_TO_SYS_OUT_INT.getProcedure()
+        );
+        assertEquals("6", outContent.toString());
+    }
+
+    @Test
     void backwardsWorks() {
         final String[] args = new String[]{"c","b","a"};
         new Program() {

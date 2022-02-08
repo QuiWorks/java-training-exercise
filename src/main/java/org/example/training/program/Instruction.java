@@ -31,7 +31,12 @@ public enum Instruction {
     PRINT_STREAM_TO_SYS_OUT_INT(Procedure.Type.PRINT, Integer.class, obj -> {
         (((Stream<Integer>) obj)).collect( Collectors.toList()).forEach( System.out::print);
         return obj;
-    }, "print to system out");
+    }, "print to system out"),
+    PRINT_INT_TO_SYS_OUT_INT(Procedure.Type.PRINT, Integer.class, obj -> {
+        System.out.print( obj );
+        return obj;
+    }, "print to system out"),
+    ADD_INT(PROC, Integer.class, obj -> ((Stream<Integer>)obj).reduce( 0, Integer::sum ), "add");
 
     /**
      * Gets a {@link Procedure} by matching text and type.
