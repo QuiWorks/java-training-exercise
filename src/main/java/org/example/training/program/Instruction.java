@@ -8,26 +8,28 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static org.example.training.program.Procedure.Type.*;
+
 /**
  * The implementations of {@link Procedure}.
  */
 @SuppressWarnings("unchecked")
 public enum Instruction {
-    ERROR(Procedure.Type.PROC, Void.class, obj -> obj, "error"),
-    STREAM_ARRAY_STRING(Procedure.Type.PREP, String.class, obj -> Arrays.stream((String[]) obj), "stream array"),
-    SORT_STREAM_STRING(Procedure.Type.PREP, String.class, obj -> ((Stream<String>) obj).sorted(String::compareTo), "sort stream", "sort"),
-    CONVERT_STREAM_INTEGER(Procedure.Type.PREP, Integer.class, obj -> ((Stream<String>) obj).map(Integer::valueOf), "convert type"),
-    SORT_STREAM_INT(Procedure.Type.PREP, Integer.class, obj -> ((Stream<Integer>) obj).sorted(Integer::compareTo), "sort stream"),
-    REVERSE_STREAM_STRING(Procedure.Type.PROC, String.class, obj -> IntStream.range(0, ((String[]) obj).length)
+    ERROR( PROC, Void.class, obj -> obj, "error"),
+    STREAM_ARRAY_STRING( PREP, String.class, obj -> Arrays.stream( (String[]) obj), "stream array"),
+    SORT_STREAM_STRING( PREP, String.class, obj -> ((Stream<String>) obj).sorted( String::compareTo), "sort stream", "sort"),
+    CONVERT_STREAM_INTEGER( PREP, Integer.class, obj -> ((Stream<String>) obj).map( Integer::valueOf), "convert type"),
+    SORT_STREAM_INT( PREP, Integer.class, obj -> ((Stream<Integer>) obj).sorted( Integer::compareTo), "sort stream"),
+    REVERSE_STREAM_STRING( PROC, String.class, obj -> IntStream.range( 0, ((String[]) obj).length)
             .map(i -> (((String[]) obj).length - 1) - i)
             .mapToObj(o -> ((String[]) obj)[o]), "reverse stream"),
-    REVERSE_SORT_INT(Procedure.Type.PROC, Integer.class, obj -> ((Stream<Integer>)obj).sorted( Comparator.reverseOrder()), "reverse sort"),
+    REVERSE_SORT_INT( PROC, Integer.class, obj -> ((Stream<Integer>)obj).sorted( Comparator.reverseOrder()), "reverse sort"),
     PRINT_STREAM_TO_SYS_OUT_STRING(Procedure.Type.PRINT, String.class, obj -> {
-        (((Stream<String>) obj)).toList().forEach(System.out::print);
+        (((Stream<String>) obj)).collect( Collectors.toList()).forEach( System.out::print);
         return obj;
     }, "print to system out"),
     PRINT_STREAM_TO_SYS_OUT_INT(Procedure.Type.PRINT, Integer.class, obj -> {
-        (((Stream<Integer>) obj)).toList().forEach(System.out::print);
+        (((Stream<Integer>) obj)).collect( Collectors.toList()).forEach( System.out::print);
         return obj;
     }, "print to system out");
 
@@ -71,10 +73,19 @@ public enum Instruction {
      */
     public Procedure getProcedure()
     {
-        return switch (procedureType) {
-            case PREP -> (Preparation) () -> function;
-            case PROC -> (Process) () -> function;
-            case PRINT -> (Print) () -> function;
-        };
+        if(procedureType.equals( PREP ))
+        {
+            return (Preparation) () -> function;
+        }
+        else if (procedureType.equals( PROC ))
+        {
+            return (Process) () -> function;
+        }
+        else if (procedureType.equals( PRINT ))
+        {
+            return (Print) () -> function;
+        }else{
+            throw new RuntimeException("ERRR");
+        }
     }
 }
