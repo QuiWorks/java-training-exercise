@@ -17,7 +17,7 @@ public interface Program {
      */
     default void run(JsonObject input, List<Procedure> procedures) {
         Memory memory = new Memory().setData(input);
-        procedures.forEach(function -> memory.setData(function.apply(memory.getData())));
+        procedures.forEach(procedure -> memory.setData(procedure.apply(memory.getData())));
     }
 
     default void run(JsonObject input, Procedure... procedures) {

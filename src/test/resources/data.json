@@ -12,10 +12,12 @@
   "points": [
     {
       "id": 1,
+      "player_id": 1,
       "value": 1
     },
     {
       "id": 2,
+      "player_id": 2,
       "value": 2
     }
   ]

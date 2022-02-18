@@ -37,9 +37,32 @@ class ProgramTest {
     }
 
     @Test
+    void totalTest() throws FileNotFoundException {
+
+        JsonReader expectReader = Json.createReader(new StringReader("{\"total\":3}"));
+        JsonReader dataReader = Json.createReader(new FileReader("src/test/resources/data.json"));
+        JsonObject data = dataReader.readObject();
+
+        JsonReader parameterReader = Json.createReader(new FileReader("src/test/resources/parameters.json"));
+        JsonObject parameters = parameterReader.readObject();
+
+        new Program() {
+        }.run(
+                data,
+                Procedure.get("total", parameters),
+                Procedure.get("print", parameters)
+        );
+
+        String string = outContent.toString();
+        JsonReader outputReader = Json.createReader(new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8)));
+        assertEquals(expectReader.readObject(), outputReader.readObject());
+
+    }
+
+    @Test
     void jsonDataTest() throws IOException {
 
-        JsonReader reader = Json.createReader(new FileReader("/home/dev/IdeaProjects/java-dev-training/src/test/resources/data.json"));
+        JsonReader reader = Json.createReader(new FileReader("src/test/resources/data.json"));
         JsonObject data = reader.readObject();
 
         new Program() {
@@ -52,5 +75,6 @@ class ProgramTest {
         String string = outContent.toString();
         JsonReader outputReader = Json.createReader(new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8)));
         assertEquals(data, outputReader.readObject());
+
     }
 }
