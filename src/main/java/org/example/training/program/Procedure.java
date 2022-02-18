@@ -1,39 +1,63 @@
 package org.example.training.program;
 
+import javax.json.JsonObject;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
- * A Procedure runs an {@link Instruction} during {@link org.example.training.program.Program} execution.
+ * Steps in a {@link Program}
  */
-public interface Procedure {
+public enum Procedure implements Function<JsonObject, JsonObject> {
+
+    NOTHING((data, parameters) -> data, "nothing", "do nothing", "do nothing to"),
+    PRINT((data, parameters) -> {
+        System.out.print(data);
+        return data;
+    });
+
 
     /**
-     * @return The implementation of the data operation.
-     * See {@link Instruction}.
+     * Gets a {@link Procedure} instance by matching text.
+     *
+     * @param text       String input used to help identify the procedure to provide.
+     * @param parameters The parameters used by the procedure.
+     * @return any matching procedure.
      */
-    Function<Object, Object> getFunction();
+    public static Procedure get(String text, JsonObject parameters) {
+        return Arrays.stream(Procedure.values())
+                .filter(i -> i.getKeywords().contains(text))
+                .findAny()
+                .orElse(NOTHING)
+                .setParameters(parameters);
+    }
 
-    /**
-     * @return The {@link Type} of the procedure.
-     */
-    Type getType();
+    private final BiFunction<JsonObject, JsonObject, JsonObject> biFunction;
+    private final Set<String> keywords;
+    private JsonObject parameters;
 
-    /**
-     * A breakdown of {@link Procedure}.
-     * Used to group procedures so the groups can be ordered and run sequentially.
-     */
-    enum Type {
-        PREP(0), PROC(1), PRINT(2);
-    
-        private final Integer order;
-    
-        Type(Integer order) {
-    
-            this.order = order;
-        }
-    
-        public Integer getOrder() {
-            return order;
-        }
+    Procedure(BiFunction<JsonObject, JsonObject, JsonObject> biFunction, String... keywords) {
+        this.biFunction = biFunction;
+        this.keywords = Arrays.stream(keywords)
+                .map(String::toLowerCase)
+                .map(String::trim)
+                .collect(Collectors.toSet());
+        this.keywords.add(this.name().toLowerCase().trim());
+    }
+
+    @Override
+    public JsonObject apply(JsonObject data) {
+        return biFunction.apply(data, parameters);
+    }
+
+    public Set<String> getKeywords() {
+        return keywords;
+    }
+
+    public Procedure setParameters(JsonObject parameters) {
+        this.parameters = parameters;
+        return this;
     }
 }
