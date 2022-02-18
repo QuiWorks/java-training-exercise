@@ -1,22 +1,23 @@
 package org.example.training;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.example.training.program.Instruction.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ProgramAbstractionTest {
@@ -41,23 +42,23 @@ class ProgramAbstractionTest {
     }
 
     interface Program {
-        default void run(Map<String, Object> input, List<Procedure> procedures) {
+        default void run(JsonObject input, List<Procedure> procedures) {
             DataPojo workingData = new DataPojo().setData(input);
             procedures.forEach(function -> workingData.setData(function.apply(workingData.getData())));
         }
 
-        default void run(Map<String, Object> input, Procedure... procedures) {
+        default void run(JsonObject input, Procedure... procedures) {
             this.run(input, Arrays.asList(procedures));
         }
 
         class DataPojo {
-            private Map<String, Object> data;
+            private JsonObject data;
 
-            public Map<String, Object> getData() {
+            public JsonObject getData() {
                 return data;
             }
 
-            public DataPojo setData(Map<String, Object> data) {
+            public DataPojo setData(JsonObject data) {
                 this.data = data;
                 return this;
             }
@@ -65,7 +66,7 @@ class ProgramAbstractionTest {
         }
     }
 
-    interface Procedure extends Function<Map<String, Object>, Map<String, Object>> {
+    interface Procedure extends Function<JsonObject, JsonObject> {
 
         enum Impl implements Procedure {
 
@@ -82,7 +83,7 @@ class ProgramAbstractionTest {
              * @param text String input used to help identify the procedure to provide.
              * @return any matching procedure.
              */
-            public static Procedure get(String text, Map<String, Object> parameters) {
+            public static Procedure get(String text, JsonObject parameters) {
                 return Arrays.stream(Impl.values())
                         .filter(i -> i.getKeywords().contains(text))
                         .findAny()
@@ -90,11 +91,11 @@ class ProgramAbstractionTest {
                         .setParameters(parameters);
             }
 
-            private final BiFunction<Map<String, Object>, Map<String, Object>, Map<String, Object>> biFunction;
+            private final BiFunction<JsonObject, JsonObject, JsonObject> biFunction;
             private final Set<String> keywords;
-            private Map<String, Object> parameters;
+            private JsonObject parameters;
 
-            Impl(BiFunction<Map<String, Object>, Map<String, Object>, Map<String, Object>> biFunction, String... keywords) {
+            Impl(BiFunction<JsonObject, JsonObject, JsonObject> biFunction, String... keywords) {
                 this.biFunction = biFunction;
                 this.keywords = Arrays.stream(keywords)
                         .map(String::toLowerCase)
@@ -104,7 +105,7 @@ class ProgramAbstractionTest {
             }
 
             @Override
-            public Map<String, Object> apply(Map<String, Object> data) {
+            public JsonObject apply(JsonObject data) {
                 // MECHANISM FOR HOW TO APPLY the correct PARAMETERs for the correct procedure goes here.
                 return biFunction.apply(data, parameters);
             }
@@ -113,7 +114,7 @@ class ProgramAbstractionTest {
                 return keywords;
             }
 
-            public Procedure setParameters(Map<String, Object> parameters) {
+            public Procedure setParameters(JsonObject parameters) {
                 this.parameters = parameters;
                 return this;
             }
@@ -123,82 +124,18 @@ class ProgramAbstractionTest {
 
     @Test
     void openApiTest() throws IOException {
-        TypeReference<Map<String, Object>> valueTypeRef = new TypeReference<>() {};
-        final Map<String, Object> data = new ObjectMapper().readValue(new File("/home/dev/IdeaProjects/java-dev-training/src/test/resources/data.json"), valueTypeRef);
+
+        JsonReader reader = Json.createReader(new FileReader("/home/dev/IdeaProjects/java-dev-training/src/test/resources/data.json"));
+        JsonObject data = reader.readObject();
 
         new Program() {
         }.run(
                 data,
-                Procedure.Impl.get("do nothing to", new HashMap<>()),
-                Procedure.Impl.get("print", new HashMap<>())
+                Procedure.Impl.get("do nothing to",data ),
+                Procedure.Impl.get("print", data)
         );
 
-//        TODO use JSON standard
-        assertEquals("{players=[{id=1, name=Eric}, {id=2, name=Jason}], points=[{id=1, value=1}, {id=2, value=2}]}", outContent.toString());
-    }
-
-    @Test
-    void alphabeticalSortingWorks() {
-        final String[] args = new String[]{"c", "b", "a"};
-        new CommandLineProgram<>(String.class) {
-        }
-                .run(args, SORT_STREAM_STRING.getProcedure());
-        assertEquals("abc", outContent.toString());
-    }
-
-    @Test
-    void ascendingSortingWorks() {
-        final String[] args = new String[]{"3", "2", "1"};
-        new CommandLineProgram<>(Integer.class) {
-        }.run(args,
-                CONVERT_STREAM_INTEGER.getProcedure(),
-                SORT_STREAM_INT.getProcedure()
-        );
-        assertEquals("123", outContent.toString());
-    }
-
-//    @Test
-//    void addIntWorks() {
-//        final String[] args = new String[]{"3", "2", "1"};
-//        new Program() {
-//        }.run(args,
-//                STREAM_ARRAY_STRING.getProcedure(),
-//                CONVERT_STREAM_INTEGER.getProcedure(),
-//                ADD_INT.getProcedure(),
-//                PRINT_INT_TO_SYS_OUT_INT.getProcedure()
-//        );
-//        assertEquals("6", outContent.toString());
-//    }
-//
-//    @Test
-//    void backwardsWorks() {
-//        final String[] args = new String[]{"c", "b", "a"};
-//        new Program() {
-//        }.run(args,
-//                REVERSE_STREAM_STRING.getProcedure(),
-//                PRINT_STREAM_TO_SYS_OUT_STRING.getProcedure()
-//        );
-//        assertEquals("abc", outContent.toString());
-//    }
-
-    @Test
-    void brokenWorks() {
-        final String[] args = new String[]{"c", "b", "a"};
-        new CommandLineProgram<>(String.class) {
-        }.run(args);
-        assertEquals("cba", outContent.toString());
-    }
-
-    @Test
-    void descendingWorks() {
-        final String[] args = new String[]{"1", "2", "3"};
-        new CommandLineProgram<>(Integer.class) {
-        }.run(args,
-                CONVERT_STREAM_INTEGER.getProcedure(),
-                SORT_STREAM_INT.getProcedure(),
-                REVERSE_SORT_INT.getProcedure()
-        );
-        assertEquals("321", outContent.toString());
+        assertEquals("{\"players\":[{\"id\":1,\"name\":\"Eric\"},{\"id\":2,\"name\":\"Jason\"}],\"points\":[{\"id\":1,\"value\":1},{\"id\":2,\"value\":2}]}", outContent.toString());
     }
 
 }
