@@ -1,85 +1,43 @@
 package org.example.training.program;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import javax.json.JsonObject;
+import java.util.Arrays;
+import java.util.List;
 
 /**
- * A simple software program abstraction.
+ * An abstraction of a software program.
  */
 public interface Program {
 
     /**
-     * Runtime memory.
-     */
-    DataPojo WORKING_DATA = new DataPojo();
-
-    /**
      * Runs input data through a list of procedures.
-     * Grouped by {@link Procedure.Type}
-     * Ordered by {@link Procedure.Type#getOrder()}
-     * @param input Any data input of any type.
-     * @param procedures A list of {@link Procedure}.
+     *
+     * @param input      {@link JsonObject} input data for the {@link Program}.
+     * @param procedures A list of {@link Procedure} applied during {@link Program} execution.
      */
-    default void run(Object input, List<Procedure> procedures)
-    {
-        WORKING_DATA.setData(input);
-        procedures.stream()
-                .collect(Collectors.groupingBy(Procedure::getType))
-                .entrySet().stream()
-                .sorted(Comparator.comparing(entry -> entry.getKey().getOrder()))
-                .map(Map.Entry::getValue)
-                .flatMap(Collection::stream)
-                .map(Procedure::getFunction)
-                .forEach(function -> WORKING_DATA.setData(function.apply(WORKING_DATA.getData())));
+    default void run(JsonObject input, List<Procedure> procedures) {
+        Memory memory = new Memory().setData(input);
+        procedures.forEach(function -> memory.setData(function.apply(memory.getData())));
     }
 
-    default void run(Object input, Procedure... procedures)
-    {
+    default void run(JsonObject input, Procedure... procedures) {
         this.run(input, Arrays.asList(procedures));
     }
 
     /**
-     * Prepend a procedure to the programs list of procedures.
-     * @param procedure The {@link Procedure} to prepend.
-     * @param procedures The current list of procedures.
-     * @return A new array of program procedures.
+     * An object that holds mutable data.
+     * Used during {@link Program} execution.
      */
-    static Procedure[] prepend(Procedure procedure, Procedure[] procedures) {
-        Procedure[] newProcedures = new Procedure[procedures.length + 1];
-        newProcedures[procedures.length] = procedure;
-        IntStream.range(0, procedures.length)
-                .forEach(index -> newProcedures[index] = procedures[index]);
-        return newProcedures;
-    }
+    class Memory {
+        private JsonObject data;
 
-    /**
-     * append a procedure to the programs list of procedures.
-     * @param procedure The {@link Procedure} to append.
-     * @param procedures The current list of procedures.
-     * @return A new array of program procedures.
-     */
-    static Procedure[] append(Procedure procedure, Procedure[] procedures) {
-        int newLength = procedures.length + 1;
-        Procedure[] newProcedures = new Procedure[newLength];
-        newProcedures[0] = procedure;
-        IntStream.range(1, newLength)
-                .forEach(index -> newProcedures[index] = procedures[index - 1]);
-        return newProcedures;
-    }
-
-    /**
-     * A Plain Old Java Object.
-     */
-    class DataPojo {
-        private Object data;
-
-        public Object getData() {
+        public JsonObject getData() {
             return data;
         }
 
-        public void setData(Object data) {
+        public Memory setData(JsonObject data) {
             this.data = data;
+            return this;
         }
 
     }

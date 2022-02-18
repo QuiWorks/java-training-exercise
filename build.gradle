@@ -11,10 +11,14 @@ repositories {
 
 dependencies {
 
-    implementation 'commons-cli:commons-cli:1.5.0'
+    // JSON related dependencies.
+    implementation group: 'javax.json', name: 'javax.json-api', version: '1.1.4'
+    implementation group: 'org.glassfish', name: 'javax.json', version: '1.1.4'
 
+    // Unit testing dependencies.
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+
 }
 
 test {
