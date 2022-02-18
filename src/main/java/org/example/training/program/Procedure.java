@@ -1,7 +1,11 @@
 package org.example.training.program;
 
+import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonValue;
+import java.io.StringReader;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -12,7 +16,25 @@ import java.util.stream.Collectors;
  */
 public enum Procedure implements Function<JsonObject, JsonObject> {
 
+    /**
+     * Does nothing.
+     */
     NOTHING((data, parameters) -> data, "nothing", "do nothing", "do nothing to"),
+
+    /**
+     * Totals an integer field of an object.
+     */
+    TOTAL((data, parameters) -> Json.createReader(new StringReader(
+            Optional.of(data.getJsonArray(parameters.getString("name")).stream()
+                            .map(JsonValue::asJsonObject)
+                            .map(obj -> obj.getInt(parameters.getString("key")))
+                            .reduce(0, Integer::sum))
+                    .map(total -> "{\"total\":" + total + "}")
+                    .orElse("{\"total\":0}"))).readObject()),
+
+    /**
+     * Prints data.
+     */
     PRINT((data, parameters) -> {
         System.out.print(data);
         return data;
