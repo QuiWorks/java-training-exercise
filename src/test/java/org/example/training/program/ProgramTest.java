@@ -37,6 +37,27 @@ class ProgramTest {
     }
 
     @Test
+    void exerciseOne() throws FileNotFoundException
+    {
+        JsonReader expectReader = Json.createReader(new FileReader("src/test/resources/exercise1-expected.json"));
+        JsonObject expected = expectReader.readObject();
+        JsonReader parameterReader = Json.createReader(new FileReader("src/test/resources/exercise1-parameters.json"));
+        JsonObject parameters = parameterReader.readObject();
+        JsonReader dataReader = Json.createReader(new FileReader("src/test/resources/data.json"));
+        JsonObject data = dataReader.readObject();
+
+        new Program() {
+        }.run(
+            data,
+            Procedure.get("print", parameters)
+        );
+
+        String string = outContent.toString();
+        JsonReader outputReader = Json.createReader(new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8)));
+        assertEquals(expected, outputReader.readObject());
+    }
+
+    @Test
     void totalTest() throws FileNotFoundException {
 
         JsonReader expectReader = Json.createReader(new StringReader("{\"total\":3}"));
