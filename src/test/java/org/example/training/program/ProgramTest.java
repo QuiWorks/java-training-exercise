@@ -40,16 +40,15 @@ class ProgramTest {
     void totalTest() throws FileNotFoundException {
 
         JsonReader expectReader = Json.createReader(new StringReader("{\"total\":3}"));
-        JsonReader dataReader = Json.createReader(new FileReader("src/test/resources/data.json"));
-        JsonObject data = dataReader.readObject();
+
+        FileInputStream input = new FileInputStream( "src/test/resources/data.json" );
 
         JsonReader parameterReader = Json.createReader(new FileReader("src/test/resources/parameters.json"));
         JsonObject parameters = parameterReader.readObject();
 
         new Program() {
-        }.run(
-            data, outContent, Procedure.get( "total", parameters),
-            Procedure.get("print", parameters)
+        }.run( input, outContent, Procedure.get( "total", parameters),
+               Procedure.get("print", parameters)
         );
 
         String string = outContent.toString();
@@ -61,18 +60,20 @@ class ProgramTest {
     @Test
     void jsonDataTest() throws IOException {
 
-        JsonReader reader = Json.createReader(new FileReader("src/test/resources/data.json"));
-        JsonObject data = reader.readObject();
+        JsonReader expectedReader = Json.createReader(new FileReader("src/test/resources/data.json"));
+        JsonObject expected = expectedReader.readObject();
+
+        FileInputStream input = new FileInputStream( "src/test/resources/data.json" );
 
         new Program() {
         }.run(
-            data, outContent, Procedure.get( "do nothing to", data),
-            Procedure.get("print", data)
+            input, outContent, Procedure.get( "do nothing to"),
+            Procedure.get("print")
         );
 
         String string = outContent.toString();
         JsonReader outputReader = Json.createReader(new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8)));
-        assertEquals(data, outputReader.readObject());
+        assertEquals(expected, outputReader.readObject());
 
     }
 }
