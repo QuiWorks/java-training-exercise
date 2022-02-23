@@ -36,6 +36,55 @@ class ProgramTest {
         System.setErr(originalErr);
     }
 
+
+
+    @Test
+    void maxTest() throws FileNotFoundException {
+
+        JsonReader expectReader = Json.createReader(new StringReader("{\"stat\":2}"));
+        JsonReader dataReader = Json.createReader(new FileReader("src/test/resources/data.json"));
+        JsonObject data = dataReader.readObject();
+
+        JsonReader parameterReader = Json.createReader(new FileReader("src/test/resources/parameters_max.json"));
+        JsonObject parameters = parameterReader.readObject();
+
+        new Program() {
+        }.run(
+                data,
+                Procedure.get("min/max", parameters),
+                Procedure.get("print", parameters)
+        );
+
+        String string = outContent.toString();
+        JsonReader outputReader = Json.createReader(new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8)));
+        assertEquals(expectReader.readObject(), outputReader.readObject());
+
+    }
+
+
+    @Test
+    void countTest() throws FileNotFoundException {
+
+        JsonReader expectReader = Json.createReader(new StringReader("{\"count\":2}"));
+        JsonReader dataReader = Json.createReader(new FileReader("src/test/resources/data.json"));
+        JsonObject data = dataReader.readObject();
+
+        JsonReader parameterReader = Json.createReader(new FileReader("src/test/resources/parameters.json"));
+        JsonObject parameters = parameterReader.readObject();
+
+        new Program() {
+        }.run(
+                data,
+                Procedure.get("count", parameters),
+                Procedure.get("print", parameters)
+        );
+
+        String string = outContent.toString();
+        JsonReader outputReader = Json.createReader(new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8)));
+        assertEquals(expectReader.readObject(), outputReader.readObject());
+
+    }
+
     @Test
     void totalTest() throws FileNotFoundException {
 

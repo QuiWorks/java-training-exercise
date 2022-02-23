@@ -30,7 +30,35 @@ public enum Procedure implements Function<JsonObject, JsonObject> {
                             .map(obj -> obj.getInt(parameters.getString("key")))
                             .reduce(0, Integer::sum))
                     .map(total -> "{\"total\":" + total + "}")
-                    .orElse("{\"total\":0}"))).readObject()),
+                    .orElse("{\"total\":0}"))).readObject(), "total", "sum"),
+
+
+    /**
+     * Totals an integer field of an object.
+     */
+    COUNT((data, parameters) -> Json.createReader(new StringReader(
+            Optional.of(data.getJsonArray(parameters.getString("name")).stream()
+                            .map(JsonValue::asJsonObject)
+                            .map(obj -> obj.getInt(parameters.getString("key")))
+                            .count())
+                    .map(total -> "{\"count\":" + total + "}")
+                    .orElse("{\"count\":0}"))).readObject(), "count"),
+
+
+    /**
+     * Gets min/max value of a field of an object.
+     */
+    MINMAX((data, parameters) -> Json.createReader(new StringReader(
+            Optional.of(data.getJsonArray(parameters.getString("name")).stream()
+                            .map(JsonValue::asJsonObject)
+                            .map(obj -> obj.getInt(parameters.getString("key")))
+                            .reduce(0
+                                   ,parameters.getString("stat").equalsIgnoreCase("max")
+                                            ? Integer::max
+                                            : Integer::min)
+                    )
+                    .map(stat -> "{\"stat\":" + stat + "}")
+                    .orElse("{\"stat\":0}"))).readObject(), "minmax","stat","min/max"),
 
     /**
      * Prints data.
