@@ -48,9 +48,8 @@ class ProgramTest {
 
         new Program() {
         }.run(
-                data,
-                Procedure.get("total", parameters),
-                Procedure.get("print", parameters)
+            data, outContent, Procedure.get( "total", parameters),
+            Procedure.get("print", parameters)
         );
 
         String string = outContent.toString();
@@ -67,9 +66,8 @@ class ProgramTest {
 
         new Program() {
         }.run(
-                data,
-                Procedure.get("do nothing to", data),
-                Procedure.get("print", data)
+            data, outContent, Procedure.get( "do nothing to", data),
+            Procedure.get("print", data)
         );
 
         String string = outContent.toString();
