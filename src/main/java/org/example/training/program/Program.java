@@ -20,33 +20,41 @@ public interface Program
 
     /**
      * Runs input data through a list of procedures.
-     * @param input      {@link JsonObject} input data for the {@link Program}.
-     * @param output {@link OutputStream} to which the data gets written.
+     *
+     * @param input      {@link InputStream} input data for the {@link Program}.
+     * @param output     {@link OutputStream} to which the data gets written.
      * @param procedures A list of {@link Procedure} applied during {@link Program} execution.
      */
     default void run( InputStream input, OutputStream output, List<Procedure> procedures )
     {
-        try (JsonWriter jsonWriter = Json.createWriter( output );
-            JsonGenerator jsonGenerator = Json.createGenerator( output ).writeStartObject();
-            JsonParser jsonParser = Json.createParser( input )
-        )
-        {
-            //TODO create final transformation event that tells the generator to write a copy of the event
-            Function<Transformation, Transformation> procedureChain = IntStream.range( 0, procedures.size() - 1 )
-                .mapToObj( i -> procedures.get( i )
-                    .andThen( procedures.get( i + 1 ) ) )
-                .findFirst()
-                .orElse( Procedure.NOTHING );
-            while ( jsonParser.hasNext() )
-            {
-                procedureChain.apply( new Transformation( jsonGenerator, jsonParser, jsonParser.next() ) );
-            }
-//            jsonWriter.writeObject( IntStream.range( 0, procedures.size() - 1 )
-//                .mapToObj( i -> procedures.get( i ).andThen( procedures.get( i + 1 ) ) )
-//                .findFirst()
-//                .orElse( Procedure.NOTHING )
-//                .apply( input ) );
-        }
+        //TODO need to group, sort by parse location, then sort by enum.compareTo.
+        // THEN chain the procedures.
+        // Top-down, Left-right.
+        IntStream.range( 0, procedures.size() - 1 )
+            .mapToObj( i -> procedures.get( i )
+                .andThen( procedures.get( i + 1 ) ) )
+            .sorted()
+            .findFirst()
+            .ifPresent( procedureChain -> {
+                try (JsonGenerator jsonGenerator = Json.createGenerator( output ).writeStartObject(); JsonParser jsonParser = Json.createParser( input ))
+                {
+                    while ( jsonParser.hasNext() )
+                    {
+                        // TODO apply the last event that compares the input with the output and fill in the gaps.
+                        Transformer finalForm = getFinalTransformation()
+                            .compose( procedureChain )
+                            .apply( new Transformer( jsonGenerator, jsonParser, jsonParser.next() ) );
+                    }
+
+                }
+            } );
+    }
+
+
+    default Function<Transformer, Transformer> getFinalTransformation()
+    {
+        //TODO create final transformation event that tells the generator to write a copy of the event
+        return t -> t;
     }
 
     default void run( InputStream input, OutputStream output, Procedure... procedures )

@@ -1,10 +1,9 @@
 package org.example.training.program;
 
-import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
+import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
-import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
@@ -15,34 +14,33 @@ import java.util.stream.Collectors;
 /**
  * Steps in a {@link Program}
  */
-public enum Procedure implements Function<Transformation, Transformation> {
-
+public enum Procedure implements Function<Transformer, Transformer>
+{
     /**
      * Does nothing.
      */
-    NOTHING((transformation, parameters) -> transformation, "nothing", "do nothing", "do nothing to"),
+    //    NOTHING((transformation, parameters) -> transformation, "nothing", "do nothing", "do nothing to"),
 
     /**
      * Totals an integer field of an object.
      */
-    TOTAL((transformation, parameters) -> Json.createReader(new StringReader(
-            Optional.of(transformation.getJsonArray(parameters.getString("name")).stream()
-                            .map(JsonValue::asJsonObject)
-                            .map(obj -> obj.getInt(parameters.getString("key")))
-                            .reduce(0, Integer::sum))
-                    .map(total -> "{\"total\":" + total + "}")
-                    .orElse("{\"total\":0}"))).readObject()),
+    //    TOTAL((transformation, parameters) -> Json.createReader(new StringReader(
+    //            Optional.of(transformation.getJsonArray(parameters.getString("name")).stream()
+    //                            .map(JsonValue::asJsonObject)
+    //                            .map(obj -> obj.getInt(parameters.getString("key")))
+    //                            .reduce(0, Integer::sum))
+    //                    .map(total -> "{\"total\":" + total + "}")
+    //                    .orElse("{\"total\":0}"))).readObject()),
 
-
-    RENAME_KEY((transformation, parameters) -> {
-        if( JsonParser.Event.KEY_NAME.equals( transformation.getEvent() )
-            && transformation.getJsonParser().getString().equals( parameters.getString( "key" ) )
-        )
-        {
-            transformation.getJsonGenerator().write( )
-        }
-    });
-
+    RENAME_KEY( JsonParser.Event.KEY_NAME, ( transformer, parameters ) -> {
+        final String keyName = transformer.getJsonParser().getString();
+        JsonGenerator jsonGenerator = keyName.equals( parameters.getString( "keyName" ) )
+            ? transformer.getJsonGenerator().write( parameters.getString( "keyReplacement" ) )
+            : transformer.getJsonGenerator();
+        return  new Transformer( transformer.getJsonParser(), keyName.equals( parameters.getString( "keyName" ) )
+            ? transformer.getJsonGenerator().write( parameters.getString( "keyReplacement" ) )
+            : transformer.getJsonGenerator(),  )
+    } );
 
     /**
      * Gets a {@link Procedure} instance by matching text.
@@ -51,46 +49,61 @@ public enum Procedure implements Function<Transformation, Transformation> {
      * @param parameters The parameters used by the procedure.
      * @return any matching procedure.
      */
-    public static Procedure get(String text, JsonObject parameters) {
-        return Arrays.stream(Procedure.values())
-                .filter(i -> i.getKeywords().contains(text))
-                .findAny()
-                .orElse(NOTHING)
-                .setParameters(parameters);
+    public static Optional<Procedure> get( JsonParser.Event event, String text, JsonObject parameters )
+    {
+        return get( text, parameters )
+            .filter( p -> p.getEvent().equals( event ) );
     }
 
-    public static Procedure get(String text) {
-        return Arrays.stream(Procedure.values())
-                .filter(i -> i.getKeywords().contains(text))
-                .findAny()
-                .orElse(NOTHING);
+    public static Optional<Procedure> get( String text, JsonObject parameters )
+    {
+        return Arrays.stream( Procedure.values() )
+            .filter( i -> i.getKeywords().contains( text ) )
+            .peek( p -> p.setParameters( parameters ) )
+            .findAny();
     }
 
-    private final BiFunction<Transformation, JsonObject, Transformation> biFunction;
+    public static Optional<Procedure> get( String text )
+    {
+        return get( text, JsonValue.EMPTY_JSON_OBJECT )
+            .filter( i -> i.getKeywords().contains( text ) );
+    }
+
+    private final BiFunction<Transformer, JsonObject, Transformer> biFunction;
+    private final JsonParser.Event event;
     private final Set<String> keywords;
     private JsonObject parameters;
 
-    Procedure(BiFunction<Transformation, JsonObject, Transformation> biFunction, String... keywords) {
+    Procedure( JsonParser.Event event, BiFunction<Transformer, JsonObject, Transformer> biFunction, String... keywords )
+    {
+        this.event = event;
         this.biFunction = biFunction;
-        this.keywords = Arrays.stream(keywords)
-                .map(String::toLowerCase)
-                .map(String::trim)
-                .collect(Collectors.toSet());
-        this.keywords.add(this.name().toLowerCase().trim());
+        this.keywords = Arrays.stream( keywords ).map( String::toLowerCase ).map( String::trim ).collect( Collectors.toSet() );
+        this.keywords.add( this.name().toLowerCase().trim() );
         this.parameters = JsonValue.EMPTY_JSON_OBJECT;
     }
 
     @Override
-    public Transformation apply(Transformation transformation) {
-        return biFunction.apply(transformation, parameters);
+    public Transformer apply( Transformer transformer )
+    {
+        return JsonParser.Event.KEY_NAME.equals( transformer.getEvent() )
+            ? biFunction.apply( transformer, parameters )
+            : transformer;
     }
 
-    public Set<String> getKeywords() {
+    public Set<String> getKeywords()
+    {
         return keywords;
     }
 
-    public Procedure setParameters(JsonObject parameters) {
+    public Procedure setParameters( JsonObject parameters )
+    {
         this.parameters = parameters;
         return this;
+    }
+
+    public JsonParser.Event getEvent()
+    {
+        return event;
     }
 }
