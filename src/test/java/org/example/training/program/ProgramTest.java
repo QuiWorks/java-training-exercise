@@ -9,6 +9,8 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -46,10 +48,9 @@ class ProgramTest {
         JsonReader parameterReader = Json.createReader(new FileReader("src/test/resources/parameters.json"));
         JsonObject parameters = parameterReader.readObject();
 
-        new Program() {
-        }.run( input, outContent, Procedure.get( "total", parameters),
-               Procedure.get("print", parameters)
-        );
+        Optional<Implementation> print = Implementation.get( "print" );
+        ( ( Program )() -> Map.of( "OUTPUT", outContent, "ERROR", errContent, "INPUT", input ) )
+            .run( print );
 
         String string = outContent.toString();
         JsonReader outputReader = Json.createReader(new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8)));
@@ -66,9 +67,8 @@ class ProgramTest {
         FileInputStream input = new FileInputStream( "src/test/resources/data.json" );
 
         new Program() {
-        }.run(
-            input, outContent, Procedure.get( "do nothing to"),
-            Procedure.get("print")
+        }.run( Implementation.get( "do nothing to"),
+            Implementation.get( "print")
         );
 
         String string = outContent.toString();
